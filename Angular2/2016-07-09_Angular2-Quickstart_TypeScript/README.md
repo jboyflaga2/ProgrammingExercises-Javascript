@@ -1,6 +1,20 @@
 # First practice for Angular2 using TypeScript
 
-**This is from the tutorial at https://angular.io/docs/js/latest/quickstart.html**
+<blockquote>
+<strong>Why use TypeScript for Angular2? </strong> 
+<br />
+(from <a href="https://www.quora.com/Is-it-necessary-to-learn-TypeScript-first-before-attempting-to-learn-Angular-2">here</a>)
+<br /><br />
+You could write your whole application in the JavaScript we know today (ECMAscript5).  But to be honest, there are some serious issues with that version. 
+<ul>
+<li> no real classes and inheritance (only prototype) 
+<li> no type checking
+<li> no module system (loading parts of javascript) 
+</ul>
+If you still want to write it in ECMAscript, you'll have to write more code to do the same,  and ergo have a higher chance at bugs getting into your code.
+</blockquote>
+
+## This is from the tutorial at https://angular.io./docs/js/latest/quickstart.html
 
 The contents below is a summary of that tutorial. This summary is intended for personal use (in case I will not be using Angular2 for a very long time a forget the basics).
 
@@ -8,13 +22,15 @@ The contents below is a summary of that tutorial. This summary is intended for p
 
 ### a. Add package definition and configuration files
 
+(Copy the code from the tutorial web page)
+
 **package.json** 
  - lists packages the QuickStart app depends on and defines some useful scripts.
 
 **tsconfig.json** 
  - is the TypeScript compiler configuration file.
 
-**typings.json** 
+**typings.json** .
  - identifies TypeScript definition files.
 
 **systemjs.config.js**
@@ -32,7 +48,52 @@ The typings folder could not show up after npm install. If so, please install th
 
 `npm run typings install`
 
+#### Helpful scripts
+
+We've included a number of npm scripts in our suggested package.json to handle common development tasks:
+
+``` JSON
+package.json (scripts)
+
+{
+  "scripts": {
+    "start": "tsc && concurrently \"npm run tsc:w\" \"npm run lite\" ",
+    "lite": "lite-server",
+    "postinstall": "typings install",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w",
+    "typings": "typings"
+  }
+}
+```
+
+We execute most npm scripts in the following way: npm run followed by a script-name. Some commands (such as start) don't require the run keyword.
+
+#### Here's what these scripts do:
+
+`npm start` - runs the compiler and a server at the same time, both in "watch mode"
+
+`npm run tsc` - runs the TypeScript compiler once
+
+`npm run tsc:w` - runs the TypeScript compiler in watch mode; the process keeps running, awaiting changes to TypeScript files and recompiling when it sees them
+
+`npm run lite` - runs the lite-server, a light-weight, static file server with excellent support for Angular apps that use routing
+
+`npm run typings` - runs the typings tool separately
+
+`npm run postinstall` - called by npm automatically after it successfully completes package installation. This script installs the TypeScript definition files defined in typings.json
+
 ## 2. Our first Angular component
+
+Let's create a folder to hold our application and add a super-simple Angular component.
+
+#### Create an app subfolder off the project root directory:
+
+```
+mkdir app
+```
+
+#### Create the component file
 
 **app/app.component.ts** - the component file
 
@@ -58,9 +119,9 @@ This QuickStart has only one, extremely simple component. But it has the essenti
 
 We **export** AppComponent so that we can import it elsewhere in our application, as we'll see when we create main.ts.
 
-## 3. Add main.ts
+## 3. Add app/main.ts
 
-Now we need something to tell Angular to load the root component. Create the file app/main.ts with the following content:
+Now we need something to tell Angular to load the root component. Create the file **`app/main.ts`** with the following content:
 
 ``` TypeScript
 import { bootstrap }    from '@angular/platform-browser-dynamic';
@@ -114,6 +175,24 @@ The noteworthy sections of HTML are:
 1. The JavaScript libraries
 2. Configuration file for SystemJS, and a script where we import and run the app module which refers to the main file that we just wrote.
 3. The <my-app> tag in the <body> which is where our app lives!
+
+
+### Add some style - `styles.css`
+``` CSS
+h1 {
+  color: #369;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 250%;
+}
+body {
+  margin: 2em;
+}
+
+ /*
+  * See https://github.com/angular/angular.io/blob/master/public/docs/_examples/styles.css
+  * for the full set of master styles used by the documentation samples
+  */
+```
 
 ## 5. Build and run the app!
 
