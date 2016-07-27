@@ -1,4 +1,5 @@
 #######################################################################
+### For Angular 2 ###
 # (July 9, 2016) The idea on how to get this came from http://stackoverflow.com/questions/37187092/angular2-gitignore
 # STEPS:
 # 1. I installed angular-cli (https://github.com/angular/angular-cli) 

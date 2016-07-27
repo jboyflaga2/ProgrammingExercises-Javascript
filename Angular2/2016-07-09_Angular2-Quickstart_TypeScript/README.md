@@ -39,6 +39,7 @@ The contents below is a summary of that tutorial. This summary is intended for p
  - There are alternatives that work just fine including the well-regarded webpack. SystemJS happens to be a good choice. But we want to be clear that it was a choice and not a preference.
  - We suggest becoming well-versed in the loader of your choice. Learn more about SystemJS configuration here.
 
+### An explanation on the use of SystemJS can be found here: https://www.codeschool.com/blog/2015/12/11/es2015-a-systemjs-odyssey/
 
 ### b. Install packages
 

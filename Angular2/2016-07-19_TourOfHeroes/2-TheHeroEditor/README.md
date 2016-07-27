@@ -5,9 +5,9 @@
 This is a summary of that tutorial. I put/copied it here becuase  that tutorial might change in the future.
 
 
-## 0. Follow the steps on the Quickstart tutorial (or just copy your folder for the quickstart tutorial named `2016-07-09_Angular2-Quickstart_TypeScript`)
+## 1. see folder "1-Introduction"
 
-## 1.  The Hero Editor
+## 2. The Hero Editor
 
 ### Keep the app transpiling and running
 ```
