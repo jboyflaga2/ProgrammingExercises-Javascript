@@ -1,8 +1,8 @@
-#
+# The Tour of Heroes tutorial
 
 ## This tutorial is from https://angular.io/docs/ts/latest/tutorial/
 
-This is a summary of that tutorial. I put/copied it here becuase  that tutorial might change in the future.
+This is a summary of that tutorial. I put/copied it here becuase that tutorial might change in the future and so that I will still have a copy of the tutorial even when I'm offline -- I will be using this as a reference when I use Angular 2 in my projects.
 
 
 ## 1. see folder "1-Introduction"
