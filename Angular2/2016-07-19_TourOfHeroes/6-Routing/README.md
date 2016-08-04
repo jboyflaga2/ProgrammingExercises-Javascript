@@ -169,11 +169,11 @@ bootstrap(AppComponent, [
   appRouterProviders
 ]);
 ```
-<h2 id="missing-part">The missing part</h1>
+<h1 id="missing-part">The missing part</h1>
 
 ## NOTE: I think something is missing in this part of the tutorial. The `<router-outlet>` needs `directives: [ROUTER_DIRECTIVES]`. But the code for that is given way below of the tutorial. I got confused. But I was able to see the error and found a fix for it.
 
-### At this point we want to remove the `<my-heroes>` and the `import { HeroesComponent }` in the `app.component.ts` because we don't want to display the heroes in there. We now want it to be displayed in the path `/heroes` and we already configured the routes to do that for us.
+### At this point we want to **remove** the `<my-heroes>` and the `import { HeroesComponent }` in the `app.component.ts` because we don't want to display the heroes in there. We now want it to be displayed in the path `/heroes` and we already configured the routes to do that for us.
 
 ``` TypeScript
 import { Component } from '@angular/core'
@@ -195,7 +195,7 @@ export class AppComponent {
 
 ```
 
-**If we try to navigate to `http://localhost:3000/heroes` in your browser we will only see the title `Tour of Heroes` in your browser. That title came from `app.component.ts`.**
+**If we try to navigate to `http://localhost:3000/heroes` in the browser we will only see the title `Tour of Heroes`. That title came from `app.component.ts`.**
 
 ### Router Outlet (This part came from the tutorial but I added the missing code below)
 
