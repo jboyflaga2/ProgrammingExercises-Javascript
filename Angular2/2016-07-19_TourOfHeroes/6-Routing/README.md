@@ -169,7 +169,7 @@ bootstrap(AppComponent, [
   appRouterProviders
 ]);
 ```
-<h1 id="missing-part">The missing part</h2>
+<h2 id="missing-part">The missing part</h1>
 
 ## NOTE: I think something is missing in this part of the tutorial. The `<router-outlet>` needs `directives: [ROUTER_DIRECTIVES]`. But the code for that is given way below of the tutorial. I got confused. But I was able to see the error and found a fix for it.
 
@@ -224,7 +224,7 @@ export class AppComponent {
 }
 ```
 
-<h1 id="missing-part-end">End of the missing part</h2>
+<h1 id="missing-part-end">End of the missing part</h1>
 
 ### Router Links
 
