@@ -32,7 +32,8 @@ Here's our plan:
 * Create a new DashboardComponent
 * Tie the Dashboard into the navigation structure
 
- > Routing is another name for navigation. The router is the mechanism for navigating from view to view.
+> Routing is another name for navigation. The router is the mechanism for navigating from view to view.
+
 
  ### Splitting the AppComponent
 
@@ -195,7 +196,7 @@ export class AppComponent {
 
 ```
 
-**If we try to navigate to `http://localhost:3000/heroes` in the browser we will only see the title `Tour of Heroes`. That title came from `app.component.ts`.**
+**If we try to navigate to `http://localhost:3000/heroes` in the browser we will only see the title "Tour of Heroes". That title came from `app.component.ts`.**
 
 ### Router Outlet (This part came from the tutorial but I added the missing code below)
 
@@ -312,3 +313,488 @@ template: `
 ```
 
 > We nested the two links within `<nav>` tags. They don't do anything yet but they'll be convenient when we style the links a little later in the chapter.
+
+
+## Dashboard Top Heroes
+
+Replace the template metadata with a templateUrl property that points to a new template file.
+```
+templateUrl: 'app/dashboard.component.html',
+```
+
+> We specify the path all the way back to the application root — app/ in this case — because Angular doesn't support relative paths by default. We can switch to [component-relative paths](https://angular.io/docs/ts/latest/cookbook/component-relative-paths.html) if we prefer.
+
+Create that file with these contents:
+``` HTML
+<h3>Top Heroes</h3>
+<div class="grid grid-pad">
+  <div *ngFor="let hero of heroes" (click)="gotoDetail(hero)" class="col-1-4">
+    <div class="module hero">
+      <h4>{{hero.name}}</h4>
+    </div>
+  </div>
+</div>
+```
+
+There's a (click) binding to a gotoDetail method we haven't written yet and we're displaying a list of heroes that we don't have. We have work to do, starting with those heroes.
+
+### We'd like to re-use the HeroService to populate the component's heroes array.
+
+Recall earlier in the chapter that we removed the HeroService from the providers array of the HeroesComponent and added it to the providers array of the top level AppComponent.
+
+**That move created a singleton HeroService instance, available to all components of the application.** Angular will inject HeroService and we'll use it here in the DashboardComponent.
+
+``` 
+import { HeroService } from './hero.service';
+```
+
+### Get heroes
+``` TypeScript
+import { Component, OnInit } from '@angular/core';
+
+import { Hero } from './hero';
+import { HeroService } from './hero.service';
+
+@Component({
+    selector: 'my-dashboard',
+    templateUrl: 'app/dashboard.component.html',
+})
+export class DashboardComponent implements OnInit {
+    heroes: Hero[] = [];
+    constructor(private heroService: HeroService) { }
+    ngOnInit() {
+        this.heroService.getHeroes()
+            .then(heroes => this.heroes = heroes.slice(1, 5));
+    }
+    gotoDetail() { /* not implemented yet */ }
+}
+```
+
+We saw this kind of logic before in the HeroesComponent.
+
+* create a heroes array property
+* inject the HeroService in the constructor and hold it in a private heroService field.
+* call the service to get heroes inside the Angular ngOnInit lifecycle hook.
+
+The noteworthy differences: we cherry-pick four heroes (2nd, 3rd, 4th, and 5th) with slice and stub the gotoDetail method until we're ready to implement it.
+
+
+## Navigate to Hero Details
+
+### We'll add a route to the HeroDetailComponent in the AppComponent where our other routes are configured.
+
+Parameterized route - We can add the hero's id to the URL. When routing to the hero whose id is 11, we could expect to see an URL such as this:
+
+```
+/detail/11
+```
+
+### Configure a Route with a Parameter
+```
+import { HeroDetailComponent } from '/hero-detail.component';
+
+...
+
+{
+  path: 'detail/:id',
+  component: HeroDetailComponent
+},
+```
+
+The colon (:) in the path indicates that `:id` is a placeholder to be filled with a specific hero id when navigating to the HeroDetailComponent.
+
+
+## Revise the HeroDetailComponent
+
+Before we rewrite the HeroDetailComponent, let's review what it looks like now:
+
+In `app/hero-detail.component.ts (current)`:
+``` TypeScript
+import { Component, Input } from '@angular/core';
+import { Hero } from './hero';
+
+@Component({
+  selector: 'my-hero-detail',
+  template: `
+    <div *ngIf="hero">
+      <h2>{{hero.name}} details!</h2>
+      <div>
+        <label>id: </label>{{hero.id}}
+      </div>
+      <div>
+        <label>name: </label>
+        <input [(ngModel)]="hero.name" placeholder="name"/>
+      </div>
+    </div>
+  `
+})
+export class HeroDetailComponent {
+  @Input() hero: Hero;
+}
+```
+
+We will no longer receive the hero in a parent component property binding. The new HeroDetailComponent should take the id parameter from the `params` observable in the `ActivatedRoute` service and use the HeroService to fetch the hero with that id.
+
+```
+import { ActivatedRoute } from '@angular/router';
+import { HeroService } from './hero.service';
+```
+
+We import the OnInit and OnDestroy interfaces because we'll call the HeroService inside the ngOnInit component lifecycle hook and we'll clean up our params subscription in the ngOnDestroy.
+```
+import { Component, OnInit, OnDestroy } from '@angular/core';
+```
+
+We inject the both the ActivatedRoute service and the HeroService into the constructor as we've done before, making private variables for both:
+
+In `app/hero-detail.component.ts (constructor)`:
+```
+constructor(
+  private heroService: HeroService,
+  private route: ActivatedRoute) {
+}
+```
+
+Inside the ngOnInit lifecycle hook, we **_subscribe_** to the `params` observable to extract the id parameter value from the ActivateRoute service and use the HeroService to fetch the hero with that id.
+
+In `app/hero-detail.component.ts (ngOnInit)`:
+``` TypeScript
+  sub: any;
+
+  ngOnInit() {
+    this.sub = this.route.params.subscribe(params => {
+      let id = +params['id'];
+      this.heroService.getHero(id)
+        .then(hero => this.hero = hero);
+    });
+  }
+```
+
+The hero `id` is a number. Route parameters are always strings. So **we convert the route parameter value to a number with the JavaScript `(+)` operator**.
+
+Inside the ngOnDestroy lifecycle hook, we unsubscribe from the params subscription.
+``` TypeScript
+ngOnDestroy() {
+  this.sub.unsubscribe();
+}
+```
+
+### Add HeroService.getHero
+
+``` TypeScript
+getHero(id: number) {
+  return this.getHeroes()
+             .then(heroes => heroes.find(hero => hero.id === id));
+}
+```
+
+### Add a goBack method that navigates backward one step in the browser's history stack.
+``` TypeScript
+goBack() {
+  window.history.back();
+}
+```
+
+> Going back too far could take us out of the application. That's acceptable in a demo. We'd guard against it in a real application, perhaps with the C[anDeactivate guard](https://angular.io/docs/ts/latest/api/router/index/CanDeactivate-interface.html).
+
+``` HTML
+<button (click)="goBack()">Back</button>
+```
+
+### Create `hero-detail.component.html`
+``` HTML
+<div *ngIf="hero">
+  <h2>{{hero.name}} details!</h2>
+  <div>
+    <label>id: </label>{{hero.id}}</div>
+  <div>
+    <label>name: </label>
+    <input [(ngModel)]="hero.name" placeholder="name" />
+  </div>
+  <button (click)="goBack()">Back</button>
+</div>
+```
+
+```
+templateUrl: 'app/hero-detail.component.html',
+```
+
+
+## Select a Dashboard Hero
+
+
+In `app/dashboard.component.ts (gotoDetail)`
+``` TypeScript
+import { Router } from '@angular/router';
+
+...
+
+constructor(
+  private router: Router,
+  private heroService: HeroService) {
+}
+
+...
+
+gotoDetail(hero: Hero) {
+  let link = ['/detail', hero.id];
+  this.router.navigate(link);
+}
+```
+
+The `gotoDetail` method navigates in two steps:
+
+1. set a route link parameters array
+2. pass the array to the router's navigate method.
+
+We wrote link parameters arrays in the AppComponent for the navigation links. Those arrays had only one element, the path of the destination route.
+
+This array has two elements, the path of the destination route and a route parameter with an id field set to the value of the selected hero's id.
+
+The two array items align with the path and :id token in the parameterized HeroDetail route configuration we added to app.routes.ts earlier in the chapter.
+
+``` TypeScript
+//In app/app.routes.ts (hero detail route)
+{
+  path: 'detail/:id',
+  component: HeroDetailComponent
+},
+```
+
+## We'll do something similar in the HeroesComponent - Select a Hero in the HeroesComponent
+
+Delete the `<my-hero-detail>` in the template of `heroes.component.ts`
+
+We'll throw in a small twist for variety. When the user selects a hero from the list, we won't go to the detail page. We'll show a mini-detail on this page instead and make the user click a button to navigate to the full detail page.
+
+### Add the mini-detail
+
+Add the following HTML fragment at the bottom of the template where the `<my-hero-detail>` used to be:
+
+``` 
+<div *ngIf="selectedHero">
+  <h2>
+    {{selectedHero.name | uppercase}} is my hero
+  </h2>
+  <button (click)="gotoDetail()">View Details</button>
+</div>
+```
+
+### Format with the `UpperCasePipe`
+
+Notice that the hero's name is displayed in CAPITAL LETTERS. That's the effect of the UpperCasePipe that we slipped into the interpolation binding. Look for it right after the pipe operator ( | ).
+
+```
+{{selectedHero.name | uppercase}} is my hero
+```
+
+Pipes are a good way to format strings, currency amounts, dates and other display data. Angular ships with several pipes and we can write our own.
+
+
+### Move content out of the component file
+
+JBOY: You know what to do based on the code below
+``` TypeScript
+@Component({
+  selector: 'my-heroes',
+  templateUrl: 'app/heroes.component.html',
+  styleUrls:  ['app/heroes.component.css']
+})
+```
+
+### Update the component class to support navigation to the HeroDetailComponent when the user clicks the View Details button
+
+1. Import the router
+2. Inject the router in the constructor (along with the HeroService)
+3. Implement the gotoDetail method by calling the router.navigate method with a two-part HeroDetail link parameters array.
+
+``` TypeScript
+  gotoDetail() {
+    this.router.navigate(['/detail', this.selectedHero.id]);
+  }
+```
+
+## Styling the App
+
+### Add a `dashboard.component.css` file:
+``` CSS
+[class*='col-'] {
+  float: left;
+}
+*, *:after, *:before {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+h3 {
+  text-align: center; margin-bottom: 0;
+}
+[class*='col-'] {
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+[class*='col-']:last-of-type {
+  padding-right: 0;
+}
+.grid {
+  margin: 0;
+}
+.col-1-4 {
+  width: 25%;
+}
+.module {
+    padding: 20px;
+    text-align: center;
+    color: #eee;
+    max-height: 120px;
+    min-width: 120px;
+    background-color: #607D8B;
+    border-radius: 2px;
+}
+h4 {
+  position: relative;
+}
+.module:hover {
+  background-color: #EEE;
+  cursor: pointer;
+  color: #607d8b;
+}
+.grid-pad {
+  padding: 10px 0;
+}
+.grid-pad > [class*='col-']:last-of-type {
+  padding-right: 20px;
+}
+@media (max-width: 600px) {
+    .module {
+      font-size: 10px;
+      max-height: 75px; }
+}
+@media (max-width: 1024px) {
+    .grid {
+      margin: 0;
+    }
+    .module {
+      min-width: 60px;
+    }
+}
+```
+
+
+### Add a `hero-detail.component.css` file:
+``` CSS
+label {
+  display: inline-block;
+  width: 3em;
+  margin: .5em 0;
+  color: #607D8B;
+  font-weight: bold;
+}
+input {
+  height: 2em;
+  font-size: 1em;
+  padding-left: .4em;
+}
+button {
+  margin-top: 20px;
+  font-family: Arial;
+  background-color: #eee;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer; cursor: hand;
+}
+button:hover {
+  background-color: #cfd8dc;
+}
+button:disabled {
+  background-color: #eee;
+  color: #ccc; 
+  cursor: auto;
+}
+```
+
+### Style the Navigation Links - Add a `app.component.css`
+``` CSS
+h1 {
+  font-size: 1.2em;
+  color: #999;
+  margin-bottom: 0;
+}
+h2 {
+  font-size: 2em;
+  margin-top: 0;
+  padding-top: 0;
+}
+nav a {
+  padding: 5px 10px;
+  text-decoration: none;
+  margin-top: 10px;
+  display: inline-block;
+  background-color: #eee;
+  border-radius: 4px;
+}
+nav a:visited, a:link {
+  color: #607D8B;
+}
+nav a:hover {
+  color: #039be5;
+  background-color: #CFD8DC;
+}
+nav a.active {
+  color: #039be5;
+}
+```
+
+> The `routerLinkActive` directive
+
+>> The Angular Router provides a `routerLinkActive` directive we can use to add a class to the HTML navigation element whose route matches the active route. All we have to do is define the style for it. Sweet!
+
+In `app/app.component.ts (active router links)`
+``` HTML
+<a [routerLink]="['/dashboard']" routerLinkActive="active">Dashboard</a>
+<a [routerLink]="['/heroes']" routerLinkActive="active">Heroes</a>
+```
+
+## Global application styles - We can also create styles at the application level outside of any component.
+
+
+In `styles.css (app styles excerpt)`
+``` CSS
+/* Master Styles */
+h1 {
+  color: #369; 
+  font-family: Arial, Helvetica, sans-serif;   
+  font-size: 250%;
+}
+h2, h3 { 
+  color: #444;
+  font-family: Arial, Helvetica, sans-serif;   
+  font-weight: lighter;
+}
+body { 
+  margin: 2em; 
+}
+body, input[text], button { 
+  color: #888; 
+  font-family: Cambria, Georgia; 
+}
+/* . . . */
+/* everywhere else */
+* { 
+  font-family: Arial, Helvetica, sans-serif; 
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
